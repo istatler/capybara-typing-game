@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A free, gentle typing game for kids: press the glowing key to toss yuzu to Mochi the capybara and learn touch typing one finger at a time. No ads, no account.">
+<title>Capybara Typing Game</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Sniglet:wght@400;800&display=swap">
+<style>
+/* Layout: one-screen game. Sky + hot-spring pond on top, wooden onsen deck below holding the keyboard and the hands helper. */
+:root {
+  --sky-top: #93d3e6; --sky-low: #dcf3e6; --hill: #a3d27f; --hill-2: #84bf66;
+  --water: #45b0c8; --water-front: #3a9fba; --stone: #8f8b80; --stone-lit: #b5b0a2;
+  --capy: #a56c3d; --capy-dark: #7c4d28; --capy-lit: #c99163; --blush: #f0937a;
+  --yuzu: #ffc21a; --yuzu-deep: #ee9612; --leaf: #4c9a38;
+  --wood: #c99a62; --wood-dark: #a77847; --wood-line: #b4844f;
+  --ink: #2d2640; --ink-soft: #5f5875; --card: #fffdf6; --line: #eadfca; --skin: #f6d6ba;
+  --good: #2aa862; --oops: #df5d3e;
+  --f-p: #b689f2; --f-r: #5b9fff; --f-m: #36bb74; --f-i: #ff913d; --f-t: #efbc25;
+  --display: 'Sniglet', 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
+  --body: 'Andika', 'Trebuchet MS', system-ui, sans-serif;
+  --k: clamp(24px, min(calc((100vw - 90px) / 10.6), 7.4vh), 58px);
+  color-scheme: light;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--sky-low); color: var(--ink); font-family: var(--body); font-size: 17px;
+  display: flex; flex-direction: column; overflow-x: hidden;
+}
+#app { flex: 1; display: grid; grid-template-rows: auto minmax(230px, 1fr) auto; min-height: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* header */
+.top {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--sky-top);
+}
+.brand { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .2px; }
+.lvl { font-family: var(--display); font-size: 16px; color: var(--ink-soft); flex: 1; min-width: 0; }
+.tools { display: flex; gap: 8px; align-items: center; }
+.pill {
+  border: 0; border-radius: 999px; padding: 6px 14px; background: var(--card); font-family: var(--display); font-size: 15px;
+  box-shadow: 0 2px 0 rgba(45, 38, 64, .18);
+}
+.count { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; }
+.dotz { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff6 0 18%, transparent 20%), var(--yuzu); box-shadow: inset 0 0 0 2px var(--yuzu-deep); }
+
+/* scene */
+.scene {
+  position: relative; overflow: hidden; min-height: 0;
+  background:
+    radial-gradient(ellipse 48% 34% at 8% 100%, var(--hill) 98%, transparent 100%),
+    radial-gradient(ellipse 52% 30% at 92% 100%, var(--hill-2) 98%, transparent 100%),
+    linear-gradient(var(--sky-top), var(--sky-low) 85%);
+}
+.sun { position: absolute; right: max(28px, env(safe-area-inset-right, 0px)); top: 18px; width: 64px; height: 64px; border-radius: 50%; background: #ffe58a; box-shadow: 0 0 0 14px #ffe58a55, 0 0 0 30px #ffe58a22; }
+#pond { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 80%; overflow: visible; }
+.rim { fill: var(--stone); }
+.rock { fill: var(--stone-lit); }
+.water { fill: var(--water); }
+.water.front { fill: var(--water-front); opacity: .86; }
+.shine { fill: none; stroke: #ffffffaa; stroke-width: 3; stroke-linecap: round; }
+.fur { fill: var(--capy); } .fur-dark { fill: var(--capy-dark); } .fur-lit { fill: var(--capy-lit); }
+.ink { fill: var(--ink); } .blush { fill: var(--blush); opacity: .45; }
+#eyeHappy { display: none; }
+#capy.happy #eye { display: none; } #capy.happy #eyeHappy { display: inline; }
+#ear { transform-box: fill-box; transform-origin: 50% 100%; }
+#capy.happy #ear { animation: wiggle .35s ease-in-out; }
+#head { transform-box: fill-box; transform-origin: 30% 100%; transition: transform .2s; }
+#capy.happy #head { transform: rotate(-3deg) translateY(-3px); }
+#eye { transform-box: fill-box; transform-origin: center; }
+#eye.blink { transform: scaleY(.12); }
+@keyframes wiggle { 0%,100% { transform: rotate(0) } 30% { transform: rotate(-22deg) } 65% { transform: rotate(14deg) } }
+.steam path { fill: none; stroke: #ffffff; stroke-width: 7; stroke-linecap: round; opacity: 0; transform-box: fill-box; animation: steam 4.5s ease-in-out infinite; }
+.steam path:nth-child(2) { animation-delay: 1.5s; } .steam path:nth-child(3) { animation-delay: 3s; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(14px) } 35% { opacity: .55 } 100% { opacity: 0; transform: translateY(-36px) } }
+.bob { transform-box: fill-box; animation: bob 2.6s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-4deg) } 50% { transform: translateY(-3px) rotate(5deg) } }
+.ripple { fill: none; stroke: #ffffff; stroke-width: 2.5; transform-box: fill-box; transform-origin: center; animation: ripple .7s ease-out forwards; }
+@keyframes ripple { from { transform: scale(.3); opacity: .9 } to { transform: scale(2.4); opacity: 0 } }
+.friend { font-size: 38px; transform-box: fill-box; transform-origin: 50% 100%; }
+.friend.bobbing { animation: friendBob 3.2s ease-in-out infinite; }
+.friend.new { animation: popIn .7s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes friendBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
+@keyframes popIn { from { transform: scale(0) } to { transform: scale(1) } }
+.headY { transform-box: fill-box; transform-origin: 50% 100%; animation: popIn .45s cubic-bezier(.3,1.6,.5,1) both; }
+
+/* the wish bubble */
+.bubble {
+  position: absolute; z-index: 2; top: 14px; left: max(16px, env(safe-area-inset-left, 0px));
+  max-width: min(560px, calc(100% - 32px)); min-width: 170px;
+  background: var(--card); border-radius: 26px; padding: 12px 22px 14px;
+  box-shadow: 0 4px 0 rgba(45, 38, 64, .16);
+}
+.bubble::after { content: ""; position: absolute; right: 38px; bottom: -14px; width: 28px; height: 28px; background: var(--card); border-radius: 0 0 22px 0; transform: rotate(35deg) skew(10deg); }
+.wish { font-family: var(--display); font-size: 14px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.2px; }
+.target { font-family: var(--body); font-weight: 700; line-height: 1.05; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+.target .big { font-size: clamp(54px, 11vh, 92px); color: var(--ink); }
+.target .big.word { font-size: clamp(38px, 8vh, 66px); letter-spacing: 2px; white-space: pre-wrap; }
+.target .big.word.long { font-size: clamp(28px, 5.6vh, 46px); }
+.target .next { font-size: clamp(22px, 4vh, 32px); color: #b8b0c6; letter-spacing: 6px; }
+.ch.done { color: var(--good); }
+.ch.now { color: var(--ink); text-decoration: underline; text-decoration-color: var(--yuzu); text-decoration-thickness: 6px; text-underline-offset: 8px; }
+.ch.todo { color: #b8b0c6; }
+.ch.sp { display: inline-block; width: .5em; }
+.ch.sp.now { background: var(--yuzu); border-radius: 6px; height: .16em; vertical-align: baseline; text-decoration: none; }
+.tip { min-height: 1.4em; font-size: 17px; color: var(--ink-soft); margin-top: 2px; }
+.tip.oops { color: var(--oops); }
+.tip.yay { color: var(--good); }
+.trail { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 32px); }
+.trail i { width: 14px; height: 14px; border-radius: 50%; background: #ffffff88; box-shadow: inset 0 0 0 2px #ffffffcc; }
+.trail i.got { background: var(--yuzu); box-shadow: inset 0 0 0 2px var(--yuzu-deep); }
+
+/* flying yuzu */
+.flyx { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; }
+.flyz, .rain {
+  width: 30px; height: 30px; border-radius: 50%; position: relative;
+  background: radial-gradient(circle at 34% 32%, #ffffffaa 0 16%, transparent 18%), var(--yuzu);
+  box-shadow: inset 0 0 0 2.5px var(--yuzu-deep);
+}
+.flyz::after, .rain::after { content: ""; position: absolute; width: 12px; height: 6px; border-radius: 50%; background: var(--leaf); top: -3px; left: 15px; transform: rotate(-30deg); }
+.rain { position: fixed; top: -40px; z-index: 40; pointer-events: none; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(calc(100vh + 80px)) rotate(540deg); } }
+
+/* deck */
+.deck {
+  display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: center; align-items: center;
+  padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: repeating-linear-gradient(180deg, var(--wood) 0 30px, var(--wood-line) 30px 32px);
+  border-top: 6px solid var(--wood-dark);
+}
+.kb { display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; gap: 6px; }
+.row.r2 { margin-left: calc(var(--k) * .35); } .row.r3 { margin-left: calc(var(--k) * .8); }
+.row.r4 { margin-left: calc(var(--k) * 2.4); }
+.key {
+  --fc: var(--f-i);
+  width: var(--k); height: calc(var(--k) * .92); border: 0; border-radius: 10px; position: relative;
+  background: color-mix(in srgb, var(--fc) 16%, var(--card)); color: var(--ink);
+  font-family: var(--body); font-weight: 700; font-size: calc(var(--k) * .44);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--fc) 75%, var(--ink)); transition: transform .08s, box-shadow .08s, opacity .2s;
+  display: grid; place-items: center; padding: 0;
+}
+.key.space { width: calc(var(--k) * 5.6); font-size: calc(var(--k) * .26); font-family: var(--display); }
+.key.later { opacity: .42; }
+.key.bump::after { content: ""; position: absolute; bottom: 16%; width: 26%; height: 3px; border-radius: 2px; background: var(--ink-soft); }
+.key.target { background: var(--fc); color: #fff; box-shadow: 0 4px 0 color-mix(in srgb, var(--fc) 60%, var(--ink)), 0 0 0 4px var(--yuzu), 0 0 22px 6px #ffd54acc; animation: glow 1s ease-in-out infinite; z-index: 1; opacity: 1; }
+.key.hit { transform: translateY(4px); box-shadow: 0 0 0 color-mix(in srgb, var(--fc) 75%, var(--ink)); }
+.key.miss { animation: shake .3s; }
+@keyframes glow { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
+@keyframes shake { 0%,100% { transform: translateX(0) } 25% { transform: translateX(-4px) } 75% { transform: translateX(4px) } }
+.helper { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.helper svg { width: min(270px, 80vw); height: auto; }
+.finger { fill: color-mix(in srgb, var(--fc) 22%, var(--skin)); stroke: color-mix(in srgb, var(--fc) 50%, var(--skin)); stroke-width: 2; transition: fill .2s; }
+.finger.on { fill: var(--fc); stroke: var(--ink); stroke-width: 2.5; transform-box: fill-box; transform-origin: 50% 100%; animation: tap 1s ease-in-out infinite; }
+@keyframes tap { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+.palm { fill: var(--skin); stroke: #e8bf9c; stroke-width: 2; }
+.fname { font-family: var(--display); font-size: 17px; background: var(--card); padding: 4px 14px; border-radius: 999px; box-shadow: 0 2px 0 var(--wood-dark); text-align: center; }
+.fname b { color: var(--fc); filter: brightness(.8); }
+
+/* cards */
+.overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(45, 38, 64, .38); padding: 16px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); overflow-y: auto; }
+.card {
+  width: min(520px, 100%); background: var(--card); border-radius: 30px; padding: 26px 26px 22px; text-align: center;
+  box-shadow: 0 8px 0 rgba(45, 38, 64, .2); display: flex; flex-direction: column; gap: 14px; align-items: center;
+  animation: cardIn .35s cubic-bezier(.3,1.4,.5,1);
+}
+@keyframes cardIn { from { transform: scale(.85); opacity: 0 } }
+.card h2 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 6vw, 42px); margin: 0; line-height: 1.1; text-wrap: balance; }
+.card p { margin: 0; line-height: 1.45; max-width: 40ch; text-wrap: pretty; }
+.card .small { font-size: 14px; color: var(--ink-soft); }
+.eyebrow { font-family: var(--display); font-size: 14px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--ink-soft); }
+.btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.btn { border: 0; border-radius: 999px; padding: 12px 24px; font-family: var(--display); font-size: 20px; background: var(--line); box-shadow: 0 4px 0 #d3c6aa; }
+.btn.go { background: var(--yuzu); box-shadow: 0 4px 0 var(--yuzu-deep); font-weight: 800; font-size: 22px; padding: 14px 32px; }
+.btn:active { transform: translateY(3px); box-shadow: none; }
+.newkeys { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.newkey { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.newkey .cap { --fc: var(--f-i); width: 72px; height: 66px; border-radius: 14px; display: grid; place-items: center; font-weight: 700; font-size: 36px; color: #fff; background: var(--fc); box-shadow: 0 5px 0 color-mix(in srgb, var(--fc) 60%, var(--ink)); }
+.newkey span { font-size: 14px; color: var(--ink-soft); max-width: 11ch; }
+.sample { font-weight: 700; font-size: 34px; letter-spacing: 2px; }
+.stars { font-size: 46px; letter-spacing: 6px; color: var(--yuzu); text-shadow: 0 3px 0 var(--yuzu-deep); }
+.stars .off { color: var(--line); text-shadow: none; }
+.bigfriend { font-size: 84px; line-height: 1; animation: popIn .7s .15s cubic-bezier(.3,1.6,.5,1) both; }
+.mini-capy { width: 150px; height: auto; }
+.map { width: min(760px, 100%); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; width: 100%; }
+.tile { border: 0; border-radius: 18px; padding: 10px 8px; background: color-mix(in srgb, var(--water) 14%, var(--card)); box-shadow: 0 3px 0 color-mix(in srgb, var(--water) 45%, var(--card)); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 14px; }
+.tile .n { font-family: var(--display); font-size: 13px; color: var(--ink-soft); }
+.tile .e { font-size: 32px; line-height: 1.2; }
+.tile .s { color: var(--yuzu-deep); letter-spacing: 2px; font-size: 15px; }
+.tile .t { font-family: var(--display); line-height: 1.15; min-height: 2.3em; display: grid; place-items: center; }
+.tile:disabled { opacity: .45; cursor: default; }
+.namebox { display: flex; flex-direction: column; gap: 6px; align-items: center; width: 100%; }
+.namebox label { font-family: var(--display); font-size: 17px; }
+.namebox input {
+  width: min(280px, 100%); padding: 10px 16px; border-radius: 999px; border: 3px solid var(--line); background: #fff; color: var(--ink);
+  font-family: var(--body); font-weight: 700; font-size: 22px; text-align: center;
+}
+.namebox input:focus { outline: none; border-color: var(--yuzu); }
+.voices { display: flex; flex-direction: column; gap: 8px; width: 100%; max-height: 46vh; overflow-y: auto; padding: 2px 2px 6px; }
+.voice {
+  border: 0; border-radius: 16px; padding: 10px 16px; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: color-mix(in srgb, var(--water) 12%, var(--card)); box-shadow: 0 3px 0 color-mix(in srgb, var(--water) 40%, var(--card));
+}
+.voice.on { background: var(--yuzu); box-shadow: 0 3px 0 var(--yuzu-deep); }
+.voice .vn { font-family: var(--display); font-size: 18px; min-width: 0; overflow-wrap: anywhere; }
+.voice .vl { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+.tile.next { background: var(--yuzu); box-shadow: 0 3px 0 var(--yuzu-deep); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="top">
+    <div class="brand">Mochi's Yuzu Bath</div>
+    <div class="lvl" id="lvlName"></div>
+    <div class="tools">
+      <span class="count" title="Yuzu tossed so far"><i class="dotz"></i><span id="yuzuTotal">0</span></span>
+      <button class="pill" id="mapBtn" type="button">Levels</button>
+      <button class="pill" id="voiceBtn" type="button">Voice</button>
+      <button class="pill" id="soundBtn" type="button" aria-pressed="true">Sound on</button>
+    </div>
+  </header>
+
+  <main class="scene">
+    <div class="sun"></div>
+    <div class="bubble" aria-live="polite">
+      <div class="wish">Mochi wants</div>
+      <div class="target" id="target"></div>
+      <div class="tip" id="tip"></div>
+    </div>
+    <svg id="pond" viewBox="0 0 600 300" preserveAspectRatio="xMidYMax meet" aria-label="Mochi the capybara relaxing in a warm pond">
+      <defs><clipPath id="frontClip"><rect x="0" y="204" width="600" height="110"></rect></clipPath></defs>
+      <g class="steam">
+        <path d="M120 170 q-12 -16 0 -32 q12 -16 0 -32"></path>
+        <path d="M470 168 q-12 -16 0 -32 q12 -16 0 -32"></path>
+        <path d="M300 150 q-12 -16 0 -32 q12 -16 0 -32"></path>
+      </g>
+      <ellipse class="rim" cx="300" cy="240" rx="294" ry="60"></ellipse>
+      <ellipse class="water" cx="300" cy="238" rx="272" ry="50"></ellipse>
+      <g id="friendsBack"></g>
+      <g id="capy" transform="translate(120 44)">
+        <ellipse class="fur" cx="140" cy="150" rx="128" ry="70"></ellipse>
+        <ellipse class="fur-lit" cx="118" cy="122" rx="92" ry="30" opacity=".35"></ellipse>
+        <g id="head">
+          <rect class="fur" x="176" y="50" width="124" height="104" rx="46"></rect>
+          <rect class="fur-dark" x="250" y="64" width="70" height="88" rx="32"></rect>
+          <ellipse id="ear" class="fur-dark" cx="202" cy="56" rx="16" ry="12"></ellipse>
+          <g id="eye"><circle class="ink" cx="243" cy="88" r="6.5"></circle><circle cx="245" cy="86" r="2" fill="#ffffff"></circle></g>
+          <path id="eyeHappy" d="M235 90 q8 -10 16 0" stroke="#2d2640" stroke-width="4" fill="none" stroke-linecap="round"></path>
+          <ellipse class="ink" cx="310" cy="96" rx="4" ry="6.5" opacity=".7"></ellipse>
+          <path d="M292 130 q10 7 22 0" stroke="#2d2640" stroke-width="3" fill="none" stroke-linecap="round"></path>
+          <ellipse class="blush" cx="258" cy="116" rx="13" ry="7"></ellipse>
+          <g id="headYuzu"></g>
+        </g>
+      </g>
+      <ellipse class="water front" cx="300" cy="238" rx="272" ry="50" clip-path="url(#frontClip)"></ellipse>
+      <path class="shine" d="M150 226 q20 -6 40 0 M405 252 q25 -6 50 0 M262 270 q15 -4 30 0"></path>
+      <g id="floaters"></g>
+      <g id="friendsFront"></g>
+      <g>
+        <ellipse class="rock" cx="70" cy="282" rx="34" ry="13"></ellipse>
+        <ellipse class="rock" cx="548" cy="276" rx="30" ry="12"></ellipse>
+        <ellipse class="rock" cx="300" cy="298" rx="40" ry="10"></ellipse>
+      </g>
+    </svg>
+    <div class="trail" id="trail" aria-hidden="true"></div>
+  </main>
+
+  <section class="deck">
+    <div class="kb" id="kb" aria-label="Keyboard helper"></div>
+    <div class="helper">
+      <svg id="hands" viewBox="0 0 300 120" aria-hidden="true"></svg>
+      <div class="fname" id="fname"></div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="startCard" hidden>
+  <div class="card">
+    <svg class="mini-capy" viewBox="170 30 160 130" aria-hidden="true">
+      <rect class="fur" x="176" y="50" width="124" height="104" rx="46"></rect>
+      <rect class="fur-dark" x="250" y="64" width="70" height="88" rx="32"></rect>
+      <ellipse class="fur-dark" cx="202" cy="56" rx="16" ry="12"></ellipse>
+      <circle class="ink" cx="243" cy="88" r="6.5"></circle>
+      <ellipse class="ink" cx="310" cy="96" rx="4" ry="6.5" opacity=".7"></ellipse>
+      <ellipse class="blush" cx="258" cy="116" rx="13" ry="7"></ellipse>
+      <circle cx="228" cy="38" r="14" fill="#ffc21a" stroke="#ee9612" stroke-width="2.5"></circle>
+    </svg>
+    <h2 id="startTitle">Hi there!</h2>
+    <p id="startText">This is Mochi the capybara. Mochi loves warm baths and yuzu fruit. Press the glowing key to toss Mochi a yuzu!</p>
+    <div class="namebox">
+      <label for="kidName">What's your name?</label>
+      <input id="kidName" type="text" maxlength="20" autocomplete="off" spellcheck="false" placeholder="Type your name">
+    </div>
+    <p class="small">Grown-ups: help your kid rest their pointer fingers on F and J. Those are the keys with little bumps.</p>
+    <div class="btns">
+      <button class="btn go" type="button" id="startGo" data-primary>Let's play!</button>
+      <button class="btn" type="button" id="startMap">Levels</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="introCard" hidden>
+  <div class="card">
+    <div class="eyebrow" id="introNum"></div>
+    <h2 id="introTitle"></h2>
+    <div class="newkeys" id="introKeys"></div>
+    <p id="introTip"></p>
+    <div class="btns"><button class="btn go" type="button" id="introGo" data-primary>Start</button></div>
+    <p class="small">Tip: you can press the long space bar to start.</p>
+  </div>
+</div>
+
+<div class="overlay" id="doneCard" hidden>
+  <div class="card">
+    <h2 id="doneTitle">Yay!</h2>
+    <div class="stars" id="doneStars"></div>
+    <div class="bigfriend" id="doneFriend"></div>
+    <p id="doneText"></p>
+    <div class="btns">
+      <button class="btn go" type="button" id="doneNext" data-primary>Next level</button>
+      <button class="btn" type="button" id="doneAgain">Play again</button>
+      <button class="btn" type="button" id="doneMap">Levels</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="voiceCard" hidden>
+  <div class="card">
+    <h2>Pick a voice</h2>
+    <p>Tap a voice to hear it. Mochi will use the one you pick.</p>
+    <div class="voices" id="voices"></div>
+    <div class="btns"><button class="btn go" type="button" id="voiceDone" data-primary>Done</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mapCard" hidden>
+  <div class="card map">
+    <h2>Pick a level</h2>
+    <p>Every level you finish brings a new friend to Mochi's bath.</p>
+    <div class="tiles" id="tiles"></div>
+    <div class="btns"><button class="btn go" type="button" id="mapClose" data-primary>Back to the bath</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+const LEVELS = [
+  { name: 'Bumpy Keys', keys: 'fj', tip: 'Rest your pointer fingers on F and J. Can you feel the little bumps? That is home base!', friend: ['🐤', 'Pip the chick'] },
+  { name: 'Middle Fingers', keys: 'dk', tip: 'Your middle fingers live right next door, on D and K.', friend: ['🐢', 'Shelly the turtle'] },
+  { name: 'Ring Fingers', keys: 'sl', tip: 'Your ring fingers rest on S and L.', friend: ['🐸', 'Hopper the frog'] },
+  { name: 'Pinky Power', keys: 'a', tip: 'Your left pinky gets A. Keep the other fingers at home!', friend: ['🦆', 'Quackers the duck'] },
+  { name: 'Little Stretch', keys: 'gh', tip: 'Slide a pointer finger one step to the middle for G and H. Then slide back home.', friend: ['🐰', 'Bun the bunny'] },
+  { name: 'First Words', words: ['add', 'dad', 'sad', 'had', 'has', 'lad', 'ask', 'all', 'fall', 'hall', 'glad', 'flag', 'salad', 'flash'], tip: 'You know enough letters to type real words now!', friend: ['🐱', 'Mittens the cat'] },
+  { name: 'Up to E and I', keys: 'ei', tip: 'Middle fingers reach up for E and I.', friend: ['🐒', 'Coco the monkey'] },
+  { name: 'R and U', keys: 'ru', tip: 'Pointer fingers reach up for R and U.', friend: ['🦜', 'Kiwi the parrot'] },
+  { name: 'T and Y', keys: 'ty', tip: 'Pointer fingers stretch up and to the middle for T and Y.', friend: ['🐿️', 'Nutty the squirrel'] },
+  { name: 'Top Row Words', words: ['red', 'hat', 'sit', 'tree', 'ride', 'kite', 'tiger', 'yes', 'jet', 'fruit', 'sheet', 'tide', 'tray', 'dirty'], tip: 'Words that use the top row. You can do it!', friend: ['🦔', 'Spike the hedgehog'] },
+  { name: 'W and O', keys: 'wo', tip: 'Ring fingers reach up for W and O.', friend: ['🐌', 'Shelby the snail'] },
+  { name: 'Q and P', keys: 'qp', tip: 'Pinkies reach up for Q and P. Big stretch!', friend: ['🦋', 'Flutter the butterfly'] },
+  { name: 'Down to N and M', keys: 'nm', tip: 'Your right pointer finger reaches down for N and M.', friend: ['🐞', 'Dot the ladybug'] },
+  { name: 'C and V', keys: 'cv', tip: 'Left middle finger reaches down for C. Left pointer finger gets V.', friend: ['🐟', 'Bubbles the fish'] },
+  { name: 'B, X and Z', keys: 'bxz', tip: 'Left pointer gets B, ring finger gets X, and pinky gets Z.', friend: ['🦩', 'Rosie the flamingo'] },
+  { name: 'Capybara Words', words: ['capy', 'yuzu', 'nap', 'bath', 'swim', 'warm', 'pond', 'snack', 'grass', 'fuzzy', 'happy', 'friend', 'capybara'], tip: 'Words all about Mochi!', friend: ['🐼', 'Bamboo the panda'] },
+  // the fourth sentence becomes "<name> loves capybaras" when the kid has typed a name
+  { name: 'The Big Level', words: ['i can type', 'hi mochi', 'yuzu for you', 'mochi loves yuzu', 'we are friends'], space: true, tip: 'Whole sentences! Tap the long space bar with your thumb between words.', friend: ['🦦', 'Ollie the otter'] },
+];
+const ROWS = ['qwertyuiop', 'asdfghjkl;', 'zxcvbnm,.', ' '];
+const FINGER = { q:'lp', a:'lp', z:'lp', w:'lr', s:'lr', x:'lr', e:'lm', d:'lm', c:'lm', r:'li', f:'li', v:'li', t:'li', g:'li', b:'li',
+  y:'ri', h:'ri', n:'ri', u:'ri', j:'ri', m:'ri', i:'rm', k:'rm', ',':'rm', o:'rr', l:'rr', '.':'rr', p:'rp', ';':'rp', ' ':'th' };
+const FCOLOR = { p:'--f-p', r:'--f-r', m:'--f-m', i:'--f-i', t:'--f-t' };
+const FNAME = { lp:['Left hand', 'pinky'], lr:['Left hand', 'ring finger'], lm:['Left hand', 'middle finger'], li:['Left hand', 'pointer finger'],
+  ri:['Right hand', 'pointer finger'], rm:['Right hand', 'middle finger'], rr:['Right hand', 'ring finger'], rp:['Right hand', 'pinky'], th:['Either hand', 'thumb'] };
+const fc = f => `var(${FCOLOR[f === 'th' ? 't' : f[1]]})`;
+const FRIEND_SPOTS = [[232,128],[296,118],[82,234],[126,266],[492,230],[540,258],[462,276],[176,290],[252,294],[346,294],[420,292],[34,262],[574,282],[62,196],[548,192],[102,294],[510,296]];
+const CHEERS = ['Yum!', 'So warm!', 'Mmm, yuzu!', 'Splash!', 'You are fast!', 'Mochi is so happy!'];
+const NS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---- saved progress (this browser only) ----
+const SAVE_KEY = 'mochi-yuzu-bath-v1';
+let save = { stars: [], yuzu: 0, sound: true };
+try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && Array.isArray(s.stars)) save = Object.assign(save, s); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
+const kidName = () => (save.name || '').trim();
+// the name as typeable keys: first word, letters only
+const typedName = () => (kidName().toLowerCase().split(/\s+/)[0] || '').replace(/[^a-z]/g, '').slice(0, 12);
+const levelName = i => LEVELS[i].space && kidName() ? `${kidName()}'s Big Level` : LEVELS[i].name;
+const cheer = () => pick(CHEERS.concat(kidName() ? `Great job, ${kidName()}!` : 'Great job!'));
+const nextOpen = () => { let i = 0; while (i < LEVELS.length - 1 && save.stars[i] > 0) i++; return i; };
+
+// ---- sound ----
+let ac = null;
+function audio() {
+  if (!save.sound) return null;
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) { return null; }
+  return ac;
+}
+function tone(freq, to, dur, type = 'sine', vol = .25, when = 0) {
+  const a = audio(); if (!a) return;
+  const t = a.currentTime + when, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .03);
+}
+const sfx = {
+  toss() { tone(500, 900, .12, 'triangle', .08); },
+  plop() { tone(760, 240, .17, 'sine', .3); },
+  oops() { tone(250, 200, .16, 'triangle', .1); },
+  word() { [660, 990].forEach((f, i) => tone(f, null, .13, 'triangle', .14, i * .08)); },
+  win() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, null, .28, 'triangle', .17, i * .11)); },
+};
+// Browsers default to their most robotic voice, so rank what the device has and use the most natural English one.
+const VOICE_NOVELTY = /zarvox|whisper|bells|bubbles|bad news|good news|boing|cellos|trinoids|organ|hysterical|jester|superstar|wobble|albert|fred|junior|ralph|kathy|deranged|pipe/i;
+function voiceScore(v) {
+  const n = v.name;
+  if (!/^en/i.test(v.lang)) return -999;
+  if (VOICE_NOVELTY.test(n)) return -500;
+  let s = 0;
+  if (/natural|neural/i.test(n)) s += 100;
+  if (/online/i.test(n)) s += 30;
+  if (/premium|enhanced|siri/i.test(n)) s += 80;
+  if (/google/i.test(n)) s += 60;
+  if (/samantha|ava|allison|susan|jenny|aria|emma|michelle|ana\b/i.test(n)) s += 25;
+  if (/en[-_]US/i.test(v.lang)) s += 10;
+  // of the old Windows voices, Zira is the least robotic
+  if (/david|mark|george|hazel/i.test(n) && !/natural/i.test(n)) s -= 15;
+  if (/zira/i.test(n) && !/natural/i.test(n)) s -= 5;
+  return s;
+}
+let voices = [];
+function loadVoices() {
+  try { voices = speechSynthesis.getVoices().filter(v => voiceScore(v) > -100).sort((a, b) => voiceScore(b) - voiceScore(a)); } catch (e) { voices = []; }
+}
+const currentVoice = () => voices.find(v => v.voiceURI === save.voice) || voices[0] || null;
+const isNatural = v => voiceScore(v) >= 60;
+if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function speak(text) {
+  if (!save.sound || !window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text), v = currentVoice();
+    if (v) { u.voice = v; u.lang = v.lang; }
+    // natural voices already sound warm; only the basic ones need the pitch lift
+    u.rate = v && isNatural(v) ? .95 : .88; u.pitch = v && isNatural(v) ? 1.05 : 1.12;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+const sayKey = k => k === ' ' ? 'space' : k.toUpperCase();
+
+// ---- svg helpers ----
+function sv(tag, attrs, parent) {
+  const el = document.createElementNS(NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(el);
+  return el;
+}
+function yuzu(r, parent) {
+  const g = sv('g', {}, parent);
+  sv('circle', { r, style: 'fill:var(--yuzu);stroke:var(--yuzu-deep)', 'stroke-width': 2.5 }, g);
+  sv('circle', { r: r * .26, cx: -r * .36, cy: -r * .36, fill: '#ffffff', opacity: .55 }, g);
+  sv('ellipse', { rx: r * .5, ry: r * .22, cx: r * .4, cy: -r * .98, style: 'fill:var(--leaf)', transform: `rotate(-30 ${r * .4} ${-r * .98})` }, g);
+  return g;
+}
+
+// ---- build keyboard + hands ----
+const kb = $('#kb'), keyEls = {};
+ROWS.forEach((row, ri) => {
+  const r = document.createElement('div'); r.className = 'row r' + (ri + 1);
+  for (const k of row) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'key' + (k === ' ' ? ' space' : '') + (k === 'f' || k === 'j' ? ' bump' : '');
+    b.textContent = k === ' ' ? 'space' : k.toUpperCase();
+    b.style.setProperty('--fc', fc(FINGER[k]));
+    b.tabIndex = -1;
+    b.addEventListener('pointerdown', e => { e.preventDefault(); press(k); });
+    keyEls[k] = b; r.appendChild(b);
+  }
+  kb.appendChild(r);
+});
+const hands = $('#hands'), fingerEls = {};
+function finger(id, attrs) {
+  const el = sv('rect', Object.assign({ class: 'finger', rx: 10.5, style: `--fc:${fc(id)}` }, attrs), hands);
+  (fingerEls[id] = fingerEls[id] || []).push(el);
+}
+sv('rect', { class: 'palm', x: 20, y: 64, width: 96, height: 50, rx: 22 }, hands);
+sv('rect', { class: 'palm', x: 184, y: 64, width: 96, height: 50, rx: 22 }, hands);
+[['p', 22, 36], ['r', 46, 50], ['m', 70, 56], ['i', 94, 50]].forEach(([f, x, h]) => {
+  finger('l' + f, { x, y: 74 - h, width: 21, height: h + 12 });
+  finger('r' + f, { x: 300 - x - 21, y: 74 - h, width: 21, height: h + 12 });
+});
+finger('th', { x: 110, y: 62, width: 20, height: 42, transform: 'rotate(38 120 83)' });
+finger('th', { x: 170, y: 62, width: 20, height: 42, transform: 'rotate(-38 180 83)' });
+
+// ---- game state ----
+let G = null, overlay = null, overlayAt = 0;
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const learnedBefore = idx => LEVELS.slice(0, idx).map(l => l.keys || '').join('');
+
+function makeQueue(idx) {
+  const L = LEVELS[idx];
+  if (L.space) return L.words.map((w, i) => i === 3 && typedName() ? `${typedName()} loves capybaras` : w);
+  if (L.words) return shuffle(L.words.slice()).slice(0, 8);
+  const fresh = L.keys.split(''), old = learnedBefore(idx).split(''), q = fresh.slice();
+  while (q.length < 16) {
+    let k = pick(q.length < 5 || !old.length || Math.random() < .6 ? fresh : old);
+    if (q.length >= 2 && q.at(-1) === k && q.at(-2) === k) {
+      const alt = fresh.concat(old).filter(x => x !== k);
+      if (alt.length) k = pick(alt);
+    }
+    q.push(k);
+  }
+  return q;
+}
+const item = () => G.queue[G.qi];
+const want = () => item()[G.ci];
+const isWords = () => !!LEVELS[G.idx].words;
+
+function render() {
+  const L = LEVELS[G.idx];
+  $('#lvlName').textContent = `Level ${G.idx + 1} · ${levelName(G.idx)}`;
+  $('#yuzuTotal').textContent = save.yuzu;
+  const t = $('#target');
+  if (G.qi >= G.queue.length) { t.innerHTML = '<span class="big">🎉</span>'; }
+  else if (isWords()) {
+    const w = item();
+    const chars = [...w].map((c, i) => {
+      const cls = i < G.ci ? 'done' : i === G.ci ? 'now' : 'todo';
+      return c === ' ' ? `<span class="ch sp ${cls}"></span>` : `<span class="ch ${cls}">${c}</span>`;
+    }).join('');
+    const nxt = G.queue[G.qi + 1];
+    t.innerHTML = `<span class="big word${w.length > 10 ? ' long' : ''}">${chars}</span>` + (nxt && !L.space ? `<span class="next">${nxt}</span>` : '');
+  } else {
+    const nxt = G.queue.slice(G.qi + 1, G.qi + 5).map(k => k.toUpperCase()).join(' ');
+    t.innerHTML = `<span class="big">${want().toUpperCase()}</span><span class="next">${nxt}</span>`;
+  }
+  $('#trail').innerHTML = G.queue.map((_, i) => `<i class="${i < G.qi ? 'got' : ''}"></i>`).join('');
+  const learned = new Set(learnedBefore(G.idx + 1));
+  if (L.space) learned.add(' ');
+  const goal = G.qi < G.queue.length ? want() : null;
+  for (const k in keyEls) {
+    keyEls[k].classList.toggle('target', k === goal);
+    keyEls[k].classList.toggle('later', !learned.has(k) && k !== goal);
+  }
+  for (const id in fingerEls) fingerEls[id].forEach(el => el.classList.toggle('on', goal != null && FINGER[goal] === id));
+  const fn = $('#fname');
+  if (goal != null) {
+    const [hand, f] = FNAME[FINGER[goal]];
+    fn.style.setProperty('--fc', fc(FINGER[goal]));
+    fn.innerHTML = `${hand} · <b>${f}</b>`;
+  } else fn.textContent = 'Mochi says thank you!';
+}
+function setTip(text, cls = '') { const el = $('#tip'); el.textContent = text; el.className = 'tip ' + cls; }
+
+function headYuzu(n) {
+  const g = $('#headYuzu');
+  while (g.childNodes.length > n) g.lastChild.remove();
+  while (g.childNodes.length < n) {
+    const i = g.childNodes.length, wrap = sv('g', { transform: `translate(${226 + (i % 2 ? 4 : 0)} ${36 - i * 25})` }, g);
+    yuzu(14, sv('g', { class: 'headY' }, wrap));
+  }
+}
+function drawFriends(newIdx) {
+  const back = $('#friendsBack'), front = $('#friendsFront');
+  back.innerHTML = ''; front.innerHTML = '';
+  LEVELS.forEach((L, i) => {
+    if (!(save.stars[i] > 0)) return;
+    const [x, y] = FRIEND_SPOTS[i];
+    // the first two friends ride on Mochi's back; the rest sit around the pond
+    const parent = i >= 2 && y < 205 ? back : front;
+    const t = sv('text', { x, y, 'text-anchor': 'middle', class: 'friend ' + (i === newIdx ? 'new' : 'bobbing'), style: `animation-delay:${(i * .37) % 3}s` }, parent);
+    t.textContent = L.friend[0];
+  });
+}
+function pondSpot() {
+  for (let n = 0; n < 40; n++) {
+    const x = 50 + Math.random() * 500, y = 214 + Math.random() * 66;
+    if (((x - 300) / 262) ** 2 + ((y - 238) / 46) ** 2 < .8) return [x, y];
+  }
+  return [300, 250];
+}
+function svgToScreen(x, y) {
+  const svg = $('#pond'), p = svg.createSVGPoint(); p.x = x; p.y = y;
+  return p.matrixTransform(svg.getScreenCTM());
+}
+function landYuzu(x, y) {
+  const f = $('#floaters');
+  const g = sv('g', { transform: `translate(${x.toFixed(1)} ${y.toFixed(1)})` }, f);
+  sv('ellipse', { class: 'ripple', rx: 18, ry: 5, cy: 6 }, g);
+  const bob = sv('g', { class: 'bob', style: `animation-delay:-${(Math.random() * 2.6).toFixed(2)}s` }, g);
+  yuzu(11, bob);
+  setTimeout(() => g.querySelector('.ripple')?.remove(), 800);
+  while (f.childNodes.length > 30) f.firstChild.remove();
+  sfx.plop();
+}
+function tossYuzu() {
+  sfx.toss();
+  const [x, y] = pondSpot();
+  if (reduced) { landYuzu(x, y); return; }
+  const from = document.querySelector('#target .big').getBoundingClientRect(), to = svgToScreen(x, y);
+  const sx = from.left + Math.min(from.width, 120) / 2 - 15, sy = from.top + from.height / 2 - 15, ex = to.x - 15, ey = to.y - 15;
+  const top = Math.min(sy, ey) - 70, d = 560;
+  const outer = document.createElement('div'); outer.className = 'flyx';
+  const inner = document.createElement('div'); inner.className = 'flyz';
+  outer.appendChild(inner); document.body.appendChild(outer);
+  outer.animate([{ transform: `translateX(${sx}px)` }, { transform: `translateX(${ex}px)` }], { duration: d, easing: 'linear', fill: 'forwards' });
+  inner.animate([
+    { transform: `translateY(${sy}px) rotate(0deg)`, easing: 'cubic-bezier(.2,.7,.4,1)' },
+    { transform: `translateY(${top}px) rotate(160deg)`, offset: .38, easing: 'cubic-bezier(.6,0,.9,.5)' },
+    { transform: `translateY(${ey}px) rotate(360deg)` },
+  ], { duration: d, fill: 'forwards' }).onfinish = () => { outer.remove(); landYuzu(x, y); };
+}
+let happyTimer = 0;
+function capyHappy() {
+  const c = $('#capy'); c.classList.remove('happy'); void c.getBoundingClientRect(); c.classList.add('happy');
+  clearTimeout(happyTimer); happyTimer = setTimeout(() => c.classList.remove('happy'), 420);
+}
+(function blink() {
+  setTimeout(() => { const e = $('#eye'); e.classList.add('blink'); setTimeout(() => e.classList.remove('blink'), 140); blink(); }, 2600 + Math.random() * 3000);
+})();
+function flash(k, cls) {
+  const el = keyEls[k]; if (!el) return;
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), cls === 'hit' ? 110 : 320);
+}
+function sayItem() { if (G.qi < G.queue.length) speak(isWords() ? item() : sayKey(want())); }
+
+// ---- playing ----
+function press(k) {
+  if (overlay || !G || !G.playing) return;
+  const goal = want();
+  if (k === goal) {
+    flash(k, 'hit');
+    G.ci++; G.wrongRun = 0; save.yuzu++;
+    tossYuzu(); capyHappy();
+    if (G.ci >= item().length) {
+      G.qi++; G.ci = 0;
+      if (isWords()) sfx.word();
+      headYuzu(Math.min(3, Math.floor(G.qi / G.queue.length * 3)));
+      if (G.qi >= G.queue.length) { finish(); return; }
+      if (isWords() || Math.random() < .25) setTip(cheer(), 'yay'); else setTip('');
+      sayItem();
+    } else setTip('');
+    persist(); render();
+  } else {
+    flash(k, 'miss'); sfx.oops();
+    G.mistakes++; G.wrongRun++;
+    const shown = k === ' ' ? 'space' : k.toUpperCase();
+    setTip(`That was ${shown}. Find the glowing ${sayKey(goal)}!`, 'oops');
+    if (G.wrongRun >= 2) { speak(`Find ${sayKey(goal)}. Use your ${FNAME[FINGER[goal]][1]}.`); G.wrongRun = 0; }
+  }
+}
+
+function beginLevel(idx) {
+  G = { idx, queue: makeQueue(idx), qi: 0, ci: 0, mistakes: 0, wrongRun: 0, playing: false };
+  $('#floaters').innerHTML = ''; headYuzu(0); drawFriends(-1); setTip('');
+  render();
+  const L = LEVELS[idx];
+  $('#introNum').textContent = `Level ${idx + 1} of ${LEVELS.length}`;
+  $('#introTitle').textContent = levelName(idx);
+  $('#introTip').textContent = L.tip;
+  const box = $('#introKeys'); box.innerHTML = '';
+  if (L.keys) {
+    for (const k of L.keys) {
+      const [hand, f] = FNAME[FINGER[k]];
+      box.insertAdjacentHTML('beforeend', `<div class="newkey"><div class="cap" style="--fc:${fc(FINGER[k])}">${k.toUpperCase()}</div><span>${hand.split(' ')[0]} ${f}</span></div>`);
+    }
+  } else {
+    box.innerHTML = `<div class="sample">${L.words[0]}</div>`;
+  }
+  openOverlay('#introCard');
+  speak(levelName(idx) + '. ' + L.tip);
+}
+function play() {
+  closeOverlays();
+  if (!G) { beginLevel(nextOpen()); return; }
+  G.playing = true; render(); sayItem();
+}
+function finish() {
+  G.playing = false; render();
+  const stars = G.mistakes <= 1 ? 3 : G.mistakes <= 5 ? 2 : 1;
+  const firstTime = !(save.stars[G.idx] > 0);
+  save.stars[G.idx] = Math.max(save.stars[G.idx] || 0, stars);
+  persist();
+  sfx.win(); rain();
+  setTimeout(() => {
+    drawFriends(firstTime ? G.idx : -1);
+    const L = LEVELS[G.idx], last = G.idx === LEVELS.length - 1;
+    const [emoji, name] = L.friend;
+    const who = kidName();
+    $('#doneTitle').textContent = last ? (who ? `${who}, you can type!` : 'You can type!') : pick([who ? `Yay, ${who}!` : 'Yay!', 'You did it!', 'Super typing!']);
+    $('#doneStars').innerHTML = [0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('');
+    $('#doneFriend').textContent = emoji;
+    $('#doneText').textContent = (firstTime ? `${name} jumped into the bath with Mochi!` : `${name} is splashing with you again!`) +
+      (stars < 3 ? ' Play again for more stars.' : '');
+    $('#doneNext').hidden = last;
+    $('#doneAgain').toggleAttribute('data-primary', last);
+    $('#doneAgain').classList.toggle('go', last);
+    openOverlay('#doneCard');
+    speak(firstTime ? `Yay! ${name} jumped into the bath!` : 'You did it!');
+  }, 900);
+}
+function rain() {
+  if (reduced) return;
+  for (let i = 0; i < 22; i++) {
+    const r = document.createElement('div'); r.className = 'rain';
+    r.style.left = (Math.random() * 100) + 'vw';
+    r.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
+    r.style.animationDelay = (Math.random() * .8) + 's';
+    document.body.appendChild(r);
+    setTimeout(() => r.remove(), 4400);
+  }
+}
+
+// ---- overlays ----
+function openOverlay(id) {
+  closeOverlays(); $(id).hidden = false; overlay = id; overlayAt = performance.now();
+  if (G) G.playing = false;
+  document.activeElement && document.activeElement.blur && document.activeElement.blur();
+}
+function closeOverlays() { document.querySelectorAll('.overlay').forEach(o => o.hidden = true); overlay = null; }
+function openMap() {
+  const open = nextOpen();
+  $('#tiles').innerHTML = LEVELS.map((L, i) => {
+    const s = save.stars[i] || 0, locked = i > open;
+    return `<button type="button" class="tile${i === open && !s ? ' next' : ''}" data-i="${i}" ${locked ? 'disabled' : ''}>
+      <span class="n">Level ${i + 1}</span><span class="e">${s ? L.friend[0] : locked ? '🔒' : '❔'}</span>
+      <span class="t">${esc(levelName(i))}</span><span class="s">${s ? '★'.repeat(s) + '☆'.repeat(3 - s) : '&nbsp;'}</span></button>`;
+  }).join('');
+  openOverlay('#mapCard');
+}
+$('#tiles').addEventListener('click', e => { const t = e.target.closest('.tile'); if (t && !t.disabled) beginLevel(+t.dataset.i); });
+$('#mapClose').onclick = () => { if (G && G.qi < G.queue.length) play(); else beginLevel(nextOpen()); };
+const keepName = () => { save.name = $('#kidName').value.trim().slice(0, 20); persist(); };
+$('#startGo').onclick = () => { keepName(); beginLevel(nextOpen()); };
+$('#startMap').onclick = () => { keepName(); openMap(); };
+$('#mapBtn').onclick = openMap;
+$('#introGo').onclick = play;
+$('#doneNext').onclick = () => beginLevel(Math.min(G.idx + 1, LEVELS.length - 1));
+$('#doneAgain').onclick = () => beginLevel(G.idx);
+$('#doneMap').onclick = openMap;
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const prettyVoice = v => v.name.replace(/^Microsoft\s+/i, '').replace(/\s*Online\s*\(Natural\)/i, '').replace(/\s*-\s*English.*$/i, '').trim();
+let voiceList = [], voiceReturn = null;
+function openVoices() {
+  voiceReturn = overlay;
+  loadVoices(); voiceList = voices.slice(0, 10);
+  const cur = currentVoice();
+  $('#voices').innerHTML = voiceList.length
+    ? voiceList.map((v, i) => `<button type="button" class="voice${cur && v.voiceURI === cur.voiceURI ? ' on' : ''}" data-i="${i}">
+        <span class="vn">${esc(prettyVoice(v))}</span><span class="vl">${isNatural(v) ? 'Natural' : 'Basic'} · ${esc(v.lang)}</span></button>`).join('')
+    : '<p>This device has no extra voices. Microsoft Edge has the most natural ones.</p>';
+  openOverlay('#voiceCard');
+}
+$('#voices').addEventListener('click', e => {
+  const b = e.target.closest('.voice'); if (!b) return;
+  save.voice = voiceList[+b.dataset.i].voiceURI;
+  if (!save.sound) { save.sound = true; paintSound(); }
+  persist();
+  document.querySelectorAll('.voice').forEach(x => x.classList.toggle('on', x === b));
+  speak('Hi! Can you find the F key?');
+});
+$('#voiceBtn').onclick = openVoices;
+$('#voiceDone').onclick = () => { if (voiceReturn) openOverlay(voiceReturn); else play(); };
+const soundBtn = $('#soundBtn');
+function paintSound() { soundBtn.textContent = save.sound ? 'Sound on' : 'Sound off'; soundBtn.setAttribute('aria-pressed', save.sound); }
+soundBtn.onclick = () => { save.sound = !save.sound; if (!save.sound) try { speechSynthesis.cancel(); } catch (e) {} persist(); paintSound(); soundBtn.blur(); };
+paintSound();
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (overlay) {
+    // let the name box take letters and spaces; Enter still starts the game
+    if (e.target.matches && e.target.matches('input') && e.key !== 'Enter') return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (performance.now() - overlayAt > 700) { const b = document.querySelector(overlay + ' [data-primary]:not([hidden])'); b && b.click(); }
+    } else if (e.key === 'Escape' && overlay === '#mapCard') $('#mapClose').click();
+    return;
+  }
+  if (e.key.length !== 1 || e.repeat) return;
+  e.preventDefault();
+  press(e.key.toLowerCase());
+});
+
+// ---- boot ----
+G = { idx: nextOpen(), queue: makeQueue(nextOpen()), qi: 0, ci: 0, mistakes: 0, wrongRun: 0, playing: false };
+render(); drawFriends(-1);
+for (let i = 0; i < 5; i++) { const [x, y] = pondSpot(); const g = sv('g', { transform: `translate(${x} ${y})` }, $('#floaters')); yuzu(11, sv('g', { class: 'bob', style: `animation-delay:-${i * .5}s` }, g)); }
+const nameInput = $('#kidName');
+nameInput.value = kidName();
+const greet = () => {
+  const n = nameInput.value.trim(), back = save.stars.some(s => s > 0);
+  $('#startTitle').textContent = back ? (n ? `Welcome back, ${n}!` : 'Welcome back!') : (n ? `Hi ${n}!` : 'Hi there!');
+};
+nameInput.addEventListener('input', greet);
+greet();
+if (save.stars.some(s => s > 0)) {
+  $('#startText').textContent = `Mochi saved you a warm spot. You have tossed ${save.yuzu} yuzu so far!`;
+  $('#startGo').textContent = 'Keep going';
+}
+openOverlay('#startCard');
+})();
+</script>
+
+</body>
+</html>
