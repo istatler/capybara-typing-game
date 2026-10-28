@@ -386,35 +386,35 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 <script>
 (() => {
 const LEVELS = [
-  { name: 'Bumpy Keys', keys: 'fj', tip: 'Rest your pointer fingers on F and J. Can you feel the little bumps? That is home base!', friend: ['🐤', 'Pip the chick'] },
-  { name: 'Middle Fingers', keys: 'dk', tip: 'Your middle fingers live right next door, on D and K.', friend: ['🐢', 'Shelly the turtle'] },
-  { name: 'Ring Fingers', keys: 'sl', tip: 'Your ring fingers rest on S and L.', friend: ['🐸', 'Hopper the frog'] },
-  { name: 'Pinky Power', keys: 'a', tip: 'Your left pinky gets A. Keep the other fingers at home!', friend: ['🦆', 'Quackers the duck'] },
-  { name: 'Little Stretch', keys: 'gh', tip: 'Slide a pointer finger one step to the middle for G and H. Then slide back home.', friend: ['🐰', 'Bun the bunny'] },
-  { name: 'First Words', words: ['add', 'dad', 'sad', 'had', 'has', 'lad', 'ask', 'all', 'fall', 'hall', 'glad', 'flag', 'salad', 'flash'], tip: 'You know enough letters to type real words now!', friend: ['🐱', 'Mittens the cat'] },
-  { name: 'Up to E and I', keys: 'ei', tip: 'Middle fingers reach up for E and I.', friend: ['🐒', 'Coco the monkey'] },
-  { name: 'R and U', keys: 'ru', tip: 'Pointer fingers reach up for R and U.', friend: ['🦜', 'Kiwi the parrot'] },
-  { name: 'T and Y', keys: 'ty', tip: 'Pointer fingers stretch up and to the middle for T and Y.', friend: ['🐿️', 'Nutty the squirrel'] },
-  { name: 'Top Row Words', words: ['red', 'hat', 'sit', 'tree', 'ride', 'kite', 'tiger', 'yes', 'jet', 'fruit', 'sheet', 'tide', 'tray', 'dirty'], tip: 'Words that use the top row. You can do it!', friend: ['🦔', 'Spike the hedgehog'] },
-  { name: 'W and O', keys: 'wo', tip: 'Ring fingers reach up for W and O.', friend: ['🐌', 'Shelby the snail'] },
-  { name: 'Q and P', keys: 'qp', tip: 'Pinkies reach up for Q and P. Big stretch!', friend: ['🦋', 'Flutter the butterfly'] },
-  { name: 'Down to N and M', keys: 'nm', tip: 'Your right pointer finger reaches down for N and M.', friend: ['🐞', 'Dot the ladybug'] },
-  { name: 'C and V', keys: 'cv', tip: 'Left middle finger reaches down for C. Left pointer finger gets V.', friend: ['🐟', 'Bubbles the fish'] },
-  { name: 'B, X and Z', keys: 'bxz', tip: 'Left pointer gets B, ring finger gets X, and pinky gets Z.', friend: ['🦩', 'Rosie the flamingo'] },
-  { name: 'Capybara Words', words: ['capy', 'yuzu', 'nap', 'bath', 'swim', 'warm', 'pond', 'snack', 'grass', 'fuzzy', 'happy', 'friend', 'capybara'], tip: 'Words all about Mochi!', friend: ['🐼', 'Bamboo the panda'] },
+  { name: 'Bumpy Keys', keys: 'fj', tip: 'Rest your pointer fingers on F and J. Can you feel the little bumps? That is home base!', friend: ['🐤', 'Pip the chick'], yay: 'Pip says: Cheep cheep! You found the bumpy keys!' },
+  { name: 'Middle Fingers', keys: 'dk', tip: 'Your middle fingers live right next door, on D and K.', friend: ['🐢', 'Shelly the turtle'], yay: 'Shelly says: Slow and steady, just like me!' },
+  { name: 'Ring Fingers', keys: 'sl', tip: 'Your ring fingers rest on S and L.', friend: ['🐸', 'Hopper the frog'], yay: 'Hopper says: Ribbit! That was hoppin\' good!' },
+  { name: 'Pinky Power', keys: 'a', tip: 'Your left pinky gets A. Keep the other fingers at home!', friend: ['🦆', 'Quackers the duck'], yay: 'Quackers says: Quack quack! Pinky power!' },
+  { name: 'Little Stretch', keys: 'gh', tip: 'Slide a pointer finger one step to the middle for G and H. Then slide back home.', friend: ['🐰', 'Bun the bunny'], yay: 'Bun says: What a hoppy little stretch!' },
+  { name: 'First Words', words: ['add', 'dad', 'sad', 'had', 'has', 'lad', 'ask', 'all', 'fall', 'hall', 'glad', 'flag', 'salad', 'flash'], tip: 'You know enough letters to type real words now!', friend: ['🐱', 'Mittens the cat'], yay: 'Mittens says: Purr-fect typing!' },
+  { name: 'Up to E and I', keys: 'ei', tip: 'Middle fingers reach up for E and I.', friend: ['🐒', 'Coco the monkey'], yay: 'Coco says: Ooh ooh ah ah! You reached way up!' },
+  { name: 'R and U', keys: 'ru', tip: 'Pointer fingers reach up for R and U.', friend: ['🦜', 'Kiwi the parrot'], yay: 'Kiwi says: Squawk! Pretty typing, pretty typing!' },
+  { name: 'T and Y', keys: 'ty', tip: 'Pointer fingers stretch up and to the middle for T and Y.', friend: ['🐿️', 'Nutty the squirrel'], yay: 'Nutty says: You\'re nuts about typing!' },
+  { name: 'Top Row Words', words: ['red', 'hat', 'sit', 'tree', 'ride', 'kite', 'tiger', 'yes', 'jet', 'fruit', 'sheet', 'tide', 'tray', 'dirty'], tip: 'Words that use the top row. You can do it!', friend: ['🦔', 'Spike the hedgehog'], yay: 'Spike says: Wow, that was sharp!' },
+  { name: 'W and O', keys: 'wo', tip: 'Ring fingers reach up for W and O.', friend: ['🐌', 'Shelby the snail'], yay: 'Shelby says: You\'re way faster than me!' },
+  { name: 'Q and P', keys: 'qp', tip: 'Pinkies reach up for Q and P. Big stretch!', friend: ['🦋', 'Flutter the butterfly'], yay: 'Flutter says: Your fingers flew like butterflies!' },
+  { name: 'Down to N and M', keys: 'nm', tip: 'Your right pointer finger reaches down for N and M.', friend: ['🐞', 'Dot the ladybug'], yay: 'Dot says: You hit every spot!' },
+  { name: 'C and V', keys: 'cv', tip: 'Left middle finger reaches down for C. Left pointer finger gets V.', friend: ['🐟', 'Bubbles the fish'], yay: 'Bubbles says: Blub blub! That was fin-tastic!' },
+  { name: 'B, X and Z', keys: 'bxz', tip: 'Left pointer gets B, ring finger gets X, and pinky gets Z.', friend: ['🦩', 'Rosie the flamingo'], yay: 'Rosie says: I\'m cheering for you on one leg!' },
+  { name: 'Capybara Words', words: ['capy', 'yuzu', 'nap', 'bath', 'swim', 'warm', 'pond', 'snack', 'grass', 'fuzzy', 'happy', 'friend', 'capybara'], tip: 'Words all about Mochi!', friend: ['🐼', 'Bamboo the panda'], yay: 'Bamboo says: That was bam-boo-tiful!' },
   // named: sentences that use the kid's typed name; mine: the level is called "<name>'s ..."
-  { name: 'The Big Level', mine: 'Big Level', words: ['i can type', 'hi mochi', 'yuzu for you', 'mochi loves yuzu', 'we are friends'], named: { 3: n => `${n} loves capybaras` }, space: true, tip: 'Whole sentences! Tap the long space bar with your thumb between words.', friend: ['🦦', 'Ollie the otter'], note: 'Ten bonus levels are waiting!' },
+  { name: 'The Big Level', mine: 'Big Level', words: ['i can type', 'hi mochi', 'yuzu for you', 'mochi loves yuzu', 'we are friends'], named: { 3: n => `${n} loves capybaras` }, space: true, tip: 'Whole sentences! Tap the long space bar with your thumb between words.', friend: ['🦦', 'Ollie the otter'], yay: 'Ollie says: You\'re otterly amazing!', note: 'Ten bonus levels are waiting!' },
   // bonus levels: check = a Finger Check quiz before every word, nopeek = keys stop glowing until a wrong press
-  { name: 'Finger Check', check: true, words: ['quick', 'zebra', 'jump', 'wax', 'vine', 'oxen', 'glove', 'pizza', 'frog', 'bump', 'yak', 'mix'], tip: 'New twist! Before each word, Mochi asks which finger types one of its letters. Tap that finger on the hands, then type the word with it.', friend: ['🦉', 'Hoot the owl'] },
-  { name: 'Long Words', check: true, words: ['banana', 'monkey', 'turtle', 'rainbow', 'pumpkin', 'blanket', 'sandwich', 'popcorn', 'umbrella', 'dinosaur'], tip: 'Big words, one letter at a time. Keep your fingers on home base between letters.', friend: ['🐨', 'Koko the koala'] },
-  { name: 'No Peeking', check: true, nopeek: true, words: ['sun', 'moon', 'cake', 'lamp', 'wolf', 'duck', 'fish', 'star', 'milk', 'bird'], tip: 'Another twist! The keys stop glowing. Your fingers know the way. If you press a wrong key, the glow comes back to help.', friend: ['🦊', 'Rusty the fox'] },
-  { name: 'Tricky Reaches', check: true, words: ['quiz', 'zoo', 'box', 'fox', 'buzz', 'jazz', 'zip', 'pepper', 'puppy', 'bubble', 'quilt'], tip: 'Lots of Q, Z, X, P and B. Those are the long stretches!', friend: ['🐧', 'Pebble the penguin'] },
-  { name: 'Little Sentences', check: true, space: true, words: ['the sun is hot', 'a frog can hop', 'i like to swim', 'my cat naps', 'we go to the pond'], tip: 'Sentences again, with a Finger Check before each one.', friend: ['🐻', 'Honey the bear'] },
-  { name: 'Comma and Period', keys: ',.', check: true, space: true, words: ['hi, mochi.', 'yuzu is yummy.', 'yes, please.', 'the pond is warm.', 'mochi naps.'], tip: 'Your right middle finger reaches down for the comma. Your right ring finger gets the period.', friend: ['🦭', 'Splash the seal'] },
-  { name: 'Animal Parade', check: true, nopeek: true, words: ['giraffe', 'elephant', 'penguin', 'kangaroo', 'octopus', 'squirrel', 'hamster', 'dolphin', 'flamingo', 'tortoise'], tip: 'Long animal words, and no peeking!', friend: ['🐘', 'Peanut the elephant'] },
-  { name: 'No Peeking Sentences', check: true, nopeek: true, space: true, words: ['i can swim fast.', 'mochi has a hat.', 'the duck says quack.', 'we love warm baths.', 'zebras like jazz.'], tip: 'Whole sentences with no glowing keys. You can do it!', friend: ['🦒', 'Stretch the giraffe'] },
-  { name: 'Silly Sentences', check: true, nopeek: true, space: true, words: ['a duck in a box.', 'the frog ate my cake.', 'six fuzzy foxes jump.', 'my yak plays the piano.', 'quick, hide the pizza.'], tip: 'The silliest sentences yet. Every letter of the alphabet is in here somewhere!', friend: ['🦄', 'Sparkle the unicorn'] },
-  { name: 'Grand Finale', mine: 'Grand Finale', check: true, nopeek: true, space: true, words: ['i am a typing star.', 'mochi is so proud.', 'thank you for the yuzu.', 'see you at the pond.', 'goodbye, friends.'], named: { 0: n => `${n} is a typing star.` }, tip: 'The last level! Finger Checks, no peeking, and the longest sentences.', friend: ['🐳', 'Wave the whale'] },
+  { name: 'Finger Check', check: true, words: ['quick', 'zebra', 'jump', 'wax', 'vine', 'oxen', 'glove', 'pizza', 'frog', 'bump', 'yak', 'mix'], tip: 'New twist! Before each word, Mochi asks which finger types one of its letters. Tap that finger on the hands, then type the word with it.', friend: ['🦉', 'Hoot the owl'], yay: 'Hoot says: WHOO typed that? You did!' },
+  { name: 'Long Words', check: true, words: ['banana', 'monkey', 'turtle', 'rainbow', 'pumpkin', 'blanket', 'sandwich', 'popcorn', 'umbrella', 'dinosaur'], tip: 'Big words, one letter at a time. Keep your fingers on home base between letters.', friend: ['🐨', 'Koko the koala'], yay: 'Koko says: That was koala-ty typing!' },
+  { name: 'No Peeking', check: true, nopeek: true, words: ['sun', 'moon', 'cake', 'lamp', 'wolf', 'duck', 'fish', 'star', 'milk', 'bird'], tip: 'Another twist! The keys stop glowing. Your fingers know the way. If you press a wrong key, the glow comes back to help.', friend: ['🦊', 'Rusty the fox'], yay: 'Rusty says: Sly as a fox! You didn\'t even peek!' },
+  { name: 'Tricky Reaches', check: true, words: ['quiz', 'zoo', 'box', 'fox', 'buzz', 'jazz', 'zip', 'pepper', 'puppy', 'bubble', 'quilt'], tip: 'Lots of Q, Z, X, P and B. Those are the long stretches!', friend: ['🐧', 'Pebble the penguin'], yay: 'Pebble says: Those were some cool reaches!' },
+  { name: 'Little Sentences', check: true, space: true, words: ['the sun is hot', 'a frog can hop', 'i like to swim', 'my cat naps', 'we go to the pond'], tip: 'Sentences again, with a Finger Check before each one.', friend: ['🐻', 'Honey the bear'], yay: 'Honey says: Sweet as honey!' },
+  { name: 'Comma and Period', keys: ',.', check: true, space: true, words: ['hi, mochi.', 'yuzu is yummy.', 'yes, please.', 'the pond is warm.', 'mochi naps.'], tip: 'Your right middle finger reaches down for the comma. Your right ring finger gets the period.', friend: ['🦭', 'Splash the seal'], yay: 'Splash says: Arf arf! Commas and periods? Easy!' },
+  { name: 'Animal Parade', check: true, nopeek: true, words: ['giraffe', 'elephant', 'penguin', 'kangaroo', 'octopus', 'squirrel', 'hamster', 'dolphin', 'flamingo', 'tortoise'], tip: 'Long animal words, and no peeking!', friend: ['🐘', 'Peanut the elephant'], yay: 'Peanut says: I\'ll never forget how great that was!' },
+  { name: 'No Peeking Sentences', check: true, nopeek: true, space: true, words: ['i can swim fast.', 'mochi has a hat.', 'the duck says quack.', 'we love warm baths.', 'zebras like jazz.'], tip: 'Whole sentences with no glowing keys. You can do it!', friend: ['🦒', 'Stretch the giraffe'], yay: 'Stretch says: I can see your typing from way up here!' },
+  { name: 'Silly Sentences', check: true, nopeek: true, space: true, words: ['a duck in a box.', 'the frog ate my cake.', 'six fuzzy foxes jump.', 'my yak plays the piano.', 'quick, hide the pizza.'], tip: 'The silliest sentences yet. Every letter of the alphabet is in here somewhere!', friend: ['🦄', 'Sparkle the unicorn'], yay: 'Sparkle says: That was magical!' },
+  { name: 'Grand Finale', mine: 'Grand Finale', check: true, nopeek: true, space: true, words: ['i am a typing star.', 'mochi is so proud.', 'thank you for the yuzu.', 'see you at the pond.', 'goodbye, friends.'], named: { 0: n => `${n} is a typing star.` }, tip: 'The last level! Finger Checks, no peeking, and the longest sentences.', friend: ['🐳', 'Wave the whale'], yay: 'Wave says: That was a whale of a job!' },
 ];
 const ROWS = ['qwertyuiop', 'asdfghjkl;', 'zxcvbnm,.', ' '];
 const FINGER = { q:'lp', a:'lp', z:'lp', w:'lr', s:'lr', x:'lr', e:'lm', d:'lm', c:'lm', r:'li', f:'li', v:'li', t:'li', g:'li', b:'li',
@@ -799,14 +799,14 @@ function finish() {
     $('#doneTitle').textContent = last ? (who ? `${who}, you can type!` : 'You can type!') : pick([who ? `Yay, ${who}!` : 'Yay!', 'You did it!', 'Super typing!']);
     $('#doneStars').innerHTML = [0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('');
     $('#doneFriend').textContent = emoji;
-    $('#doneText').textContent = (firstTime ? `${name} jumped into the bath with Mochi!` : `${name} is splashing with you again!`) +
+    $('#doneText').textContent = (firstTime ? `${name} jumped into the bath with Mochi!` : `${name} is splashing with you again!`) + ' ' + L.yay +
       (L.check ? ` Finger Check: ${G.checkFirst} of ${G.checks} right on the first try.` : '') +
       (stars < 3 ? ' Play again for more stars.' : '') + (L.note ? ' ' + L.note : '');
     $('#doneNext').hidden = last;
     $('#doneAgain').toggleAttribute('data-primary', last);
     $('#doneAgain').classList.toggle('go', last);
     openOverlay('#doneCard');
-    speak(firstTime ? `Yay! ${name} jumped into the bath!` : 'You did it!');
+    speak(firstTime ? `Yay! ${name} jumped into the bath! ${L.yay}` : L.yay);
   }, 900);
 }
 function rain() {
