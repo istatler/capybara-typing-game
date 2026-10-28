@@ -213,6 +213,22 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .voice .vl { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
 .tile.next { background: var(--yuzu); box-shadow: 0 3px 0 var(--yuzu-deep); }
 
+/* bonus-level twists */
+.nopeek .key { --fc: #b8b0c6 !important; }
+.twists { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.twists:empty { display: none; }
+.twist { font-family: var(--display); font-size: 16px; padding: 4px 14px; border-radius: 999px; background: var(--yuzu); box-shadow: 0 2px 0 var(--yuzu-deep); }
+.qkey { display: inline-grid; place-items: center; min-width: 1.4em; padding: 0 .2em; border-radius: 12px; background: var(--ink); color: #fff; font-family: var(--body); }
+.qhands { width: min(460px, 100%); height: auto; }
+.qhands text { font-family: var(--display); font-size: 12px; fill: var(--ink-soft); }
+.qhands .finger { fill: var(--skin); stroke: #e8bf9c; cursor: pointer; transform-box: fill-box; transform-origin: 50% 100%; }
+.qhands .finger:hover { fill: color-mix(in srgb, var(--yuzu) 45%, var(--skin)); }
+.qhands .finger.wrong { fill: color-mix(in srgb, var(--oops) 30%, var(--skin)); animation: shake .3s; }
+.qhands .finger.hint { fill: var(--yuzu); stroke: var(--yuzu-deep); animation: tap 1s ease-in-out infinite; }
+.qhands .finger.right { fill: var(--fc); stroke: var(--ink); stroke-width: 2.5; animation: tap .5s ease-in-out 2; }
+.qtip { min-height: 2.9em; font-size: 18px; color: var(--ink-soft); }
+.qtip.oops { color: var(--oops); } .qtip.yay { color: var(--good); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
@@ -316,6 +332,7 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
     <div class="eyebrow" id="introNum"></div>
     <h2 id="introTitle"></h2>
     <div class="newkeys" id="introKeys"></div>
+    <div class="twists" id="introTwists"></div>
     <p id="introTip"></p>
     <div class="btns"><button class="btn go" type="button" id="introGo" data-primary>Start</button></div>
     <p class="small">Tip: you can press the long space bar to start.</p>
@@ -333,6 +350,18 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
       <button class="btn" type="button" id="doneAgain">Play again</button>
       <button class="btn" type="button" id="doneMap">Levels</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="checkCard" hidden>
+  <div class="card check">
+    <div class="eyebrow">Finger Check</div>
+    <h2>Which finger types <span class="qkey" id="quizKey"></span>?</h2>
+    <p class="small">Next up: <b id="quizWord"></b></p>
+    <svg class="qhands" id="quizHands" viewBox="0 0 300 132" role="group" aria-label="Tap a finger">
+      <text x="68" y="128" text-anchor="middle">left hand</text><text x="232" y="128" text-anchor="middle">right hand</text>
+    </svg>
+    <p class="qtip" id="quizTip"></p>
   </div>
 </div>
 
@@ -373,8 +402,19 @@ const LEVELS = [
   { name: 'C and V', keys: 'cv', tip: 'Left middle finger reaches down for C. Left pointer finger gets V.', friend: ['🐟', 'Bubbles the fish'] },
   { name: 'B, X and Z', keys: 'bxz', tip: 'Left pointer gets B, ring finger gets X, and pinky gets Z.', friend: ['🦩', 'Rosie the flamingo'] },
   { name: 'Capybara Words', words: ['capy', 'yuzu', 'nap', 'bath', 'swim', 'warm', 'pond', 'snack', 'grass', 'fuzzy', 'happy', 'friend', 'capybara'], tip: 'Words all about Mochi!', friend: ['🐼', 'Bamboo the panda'] },
-  // the fourth sentence becomes "<name> loves capybaras" when the kid has typed a name
-  { name: 'The Big Level', words: ['i can type', 'hi mochi', 'yuzu for you', 'mochi loves yuzu', 'we are friends'], space: true, tip: 'Whole sentences! Tap the long space bar with your thumb between words.', friend: ['🦦', 'Ollie the otter'] },
+  // named: sentences that use the kid's typed name; mine: the level is called "<name>'s ..."
+  { name: 'The Big Level', mine: 'Big Level', words: ['i can type', 'hi mochi', 'yuzu for you', 'mochi loves yuzu', 'we are friends'], named: { 3: n => `${n} loves capybaras` }, space: true, tip: 'Whole sentences! Tap the long space bar with your thumb between words.', friend: ['🦦', 'Ollie the otter'], note: 'Ten bonus levels are waiting!' },
+  // bonus levels: check = a Finger Check quiz before every word, nopeek = keys stop glowing until a wrong press
+  { name: 'Finger Check', check: true, words: ['quick', 'zebra', 'jump', 'wax', 'vine', 'oxen', 'glove', 'pizza', 'frog', 'bump', 'yak', 'mix'], tip: 'New twist! Before each word, Mochi asks which finger types one of its letters. Tap that finger on the hands, then type the word with it.', friend: ['🦉', 'Hoot the owl'] },
+  { name: 'Long Words', check: true, words: ['banana', 'monkey', 'turtle', 'rainbow', 'pumpkin', 'blanket', 'sandwich', 'popcorn', 'umbrella', 'dinosaur'], tip: 'Big words, one letter at a time. Keep your fingers on home base between letters.', friend: ['🐨', 'Koko the koala'] },
+  { name: 'No Peeking', check: true, nopeek: true, words: ['sun', 'moon', 'cake', 'lamp', 'wolf', 'duck', 'fish', 'star', 'milk', 'bird'], tip: 'Another twist! The keys stop glowing. Your fingers know the way. If you press a wrong key, the glow comes back to help.', friend: ['🦊', 'Rusty the fox'] },
+  { name: 'Tricky Reaches', check: true, words: ['quiz', 'zoo', 'box', 'fox', 'buzz', 'jazz', 'zip', 'pepper', 'puppy', 'bubble', 'quilt'], tip: 'Lots of Q, Z, X, P and B. Those are the long stretches!', friend: ['🐧', 'Pebble the penguin'] },
+  { name: 'Little Sentences', check: true, space: true, words: ['the sun is hot', 'a frog can hop', 'i like to swim', 'my cat naps', 'we go to the pond'], tip: 'Sentences again, with a Finger Check before each one.', friend: ['🐻', 'Honey the bear'] },
+  { name: 'Comma and Period', keys: ',.', check: true, space: true, words: ['hi, mochi.', 'yuzu is yummy.', 'yes, please.', 'the pond is warm.', 'mochi naps.'], tip: 'Your right middle finger reaches down for the comma. Your right ring finger gets the period.', friend: ['🦭', 'Splash the seal'] },
+  { name: 'Animal Parade', check: true, nopeek: true, words: ['giraffe', 'elephant', 'penguin', 'kangaroo', 'octopus', 'squirrel', 'hamster', 'dolphin', 'flamingo', 'tortoise'], tip: 'Long animal words, and no peeking!', friend: ['🐘', 'Peanut the elephant'] },
+  { name: 'No Peeking Sentences', check: true, nopeek: true, space: true, words: ['i can swim fast.', 'mochi has a hat.', 'the duck says quack.', 'we love warm baths.', 'zebras like jazz.'], tip: 'Whole sentences with no glowing keys. You can do it!', friend: ['🦒', 'Stretch the giraffe'] },
+  { name: 'Silly Sentences', check: true, nopeek: true, space: true, words: ['a duck in a box.', 'the frog ate my cake.', 'six fuzzy foxes jump.', 'my yak plays the piano.', 'quick, hide the pizza.'], tip: 'The silliest sentences yet. Every letter of the alphabet is in here somewhere!', friend: ['🦄', 'Sparkle the unicorn'] },
+  { name: 'Grand Finale', mine: 'Grand Finale', check: true, nopeek: true, space: true, words: ['i am a typing star.', 'mochi is so proud.', 'thank you for the yuzu.', 'see you at the pond.', 'goodbye, friends.'], named: { 0: n => `${n} is a typing star.` }, tip: 'The last level! Finger Checks, no peeking, and the longest sentences.', friend: ['🐳', 'Wave the whale'] },
 ];
 const ROWS = ['qwertyuiop', 'asdfghjkl;', 'zxcvbnm,.', ' '];
 const FINGER = { q:'lp', a:'lp', z:'lp', w:'lr', s:'lr', x:'lr', e:'lm', d:'lm', c:'lm', r:'li', f:'li', v:'li', t:'li', g:'li', b:'li',
@@ -383,7 +423,8 @@ const FCOLOR = { p:'--f-p', r:'--f-r', m:'--f-m', i:'--f-i', t:'--f-t' };
 const FNAME = { lp:['Left hand', 'pinky'], lr:['Left hand', 'ring finger'], lm:['Left hand', 'middle finger'], li:['Left hand', 'pointer finger'],
   ri:['Right hand', 'pointer finger'], rm:['Right hand', 'middle finger'], rr:['Right hand', 'ring finger'], rp:['Right hand', 'pinky'], th:['Either hand', 'thumb'] };
 const fc = f => `var(${FCOLOR[f === 'th' ? 't' : f[1]]})`;
-const FRIEND_SPOTS = [[232,128],[296,118],[82,234],[126,266],[492,230],[540,258],[462,276],[176,290],[252,294],[346,294],[420,292],[34,262],[574,282],[62,196],[548,192],[102,294],[510,296]];
+const FRIEND_SPOTS = [[232,128],[296,118],[82,234],[126,266],[492,230],[540,258],[462,276],[176,290],[252,294],[346,294],[420,292],[34,262],[574,282],[62,196],[548,192],[102,294],[510,296],
+  [430,220],[528,210],[400,270],[588,236],[18,232],[212,270],[150,222],[290,284],[372,232],[14,300]];
 const CHEERS = ['Yum!', 'So warm!', 'Mmm, yuzu!', 'Splash!', 'You are fast!', 'Mochi is so happy!'];
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
@@ -397,7 +438,7 @@ const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save
 const kidName = () => (save.name || '').trim();
 // the name as typeable keys: first word, letters only
 const typedName = () => (kidName().toLowerCase().split(/\s+/)[0] || '').replace(/[^a-z]/g, '').slice(0, 12);
-const levelName = i => LEVELS[i].space && kidName() ? `${kidName()}'s Big Level` : LEVELS[i].name;
+const levelName = i => LEVELS[i].mine && kidName() ? `${kidName()}'s ${LEVELS[i].mine}` : LEVELS[i].name;
 const cheer = () => pick(CHEERS.concat(kidName() ? `Great job, ${kidName()}!` : 'Great job!'));
 const nextOpen = () => { let i = 0; while (i < LEVELS.length - 1 && save.stars[i] > 0) i++; return i; };
 
@@ -491,19 +532,25 @@ ROWS.forEach((row, ri) => {
   }
   kb.appendChild(r);
 });
-const hands = $('#hands'), fingerEls = {};
-function finger(id, attrs) {
-  const el = sv('rect', Object.assign({ class: 'finger', rx: 10.5, style: `--fc:${fc(id)}` }, attrs), hands);
-  (fingerEls[id] = fingerEls[id] || []).push(el);
+// draws two hands into an svg; returns finger id -> rects. Thumbs sit in a rotated <g> so CSS animations don't undo the tilt.
+function drawHands(svg) {
+  const els = {};
+  const finger = (id, attrs, parent = svg) => {
+    const el = sv('rect', Object.assign({ class: 'finger', rx: 10.5, 'data-f': id, style: `--fc:${fc(id)}` }, attrs), parent);
+    (els[id] = els[id] || []).push(el);
+  };
+  sv('rect', { class: 'palm', x: 20, y: 64, width: 96, height: 50, rx: 22 }, svg);
+  sv('rect', { class: 'palm', x: 184, y: 64, width: 96, height: 50, rx: 22 }, svg);
+  [['p', 22, 36], ['r', 46, 50], ['m', 70, 56], ['i', 94, 50]].forEach(([f, x, h]) => {
+    finger('l' + f, { x, y: 74 - h, width: 21, height: h + 12 });
+    finger('r' + f, { x: 300 - x - 21, y: 74 - h, width: 21, height: h + 12 });
+  });
+  finger('th', { x: 110, y: 62, width: 20, height: 42 }, sv('g', { transform: 'rotate(38 120 83)' }, svg));
+  finger('th', { x: 170, y: 62, width: 20, height: 42 }, sv('g', { transform: 'rotate(-38 180 83)' }, svg));
+  return els;
 }
-sv('rect', { class: 'palm', x: 20, y: 64, width: 96, height: 50, rx: 22 }, hands);
-sv('rect', { class: 'palm', x: 184, y: 64, width: 96, height: 50, rx: 22 }, hands);
-[['p', 22, 36], ['r', 46, 50], ['m', 70, 56], ['i', 94, 50]].forEach(([f, x, h]) => {
-  finger('l' + f, { x, y: 74 - h, width: 21, height: h + 12 });
-  finger('r' + f, { x: 300 - x - 21, y: 74 - h, width: 21, height: h + 12 });
-});
-finger('th', { x: 110, y: 62, width: 20, height: 42, transform: 'rotate(38 120 83)' });
-finger('th', { x: 170, y: 62, width: 20, height: 42, transform: 'rotate(-38 180 83)' });
+const fingerEls = drawHands($('#hands'));
+const quizEls = drawHands($('#quizHands'));
 
 // ---- game state ----
 let G = null, overlay = null, overlayAt = 0;
@@ -513,7 +560,7 @@ const learnedBefore = idx => LEVELS.slice(0, idx).map(l => l.keys || '').join(''
 
 function makeQueue(idx) {
   const L = LEVELS[idx];
-  if (L.space) return L.words.map((w, i) => i === 3 && typedName() ? `${typedName()} loves capybaras` : w);
+  if (L.space) return L.words.map((w, i) => L.named && L.named[i] && typedName() ? L.named[i](typedName()) : w);
   if (L.words) return shuffle(L.words.slice()).slice(0, 8);
   const fresh = L.keys.split(''), old = learnedBefore(idx).split(''), q = fresh.slice();
   while (q.length < 16) {
@@ -552,13 +599,17 @@ function render() {
   const learned = new Set(learnedBefore(G.idx + 1));
   if (L.space) learned.add(' ');
   const goal = G.qi < G.queue.length ? want() : null;
+  // no-peek levels hide the glow until a wrong press
+  const peek = !L.nopeek || G.hint;
+  $('#app').classList.toggle('nopeek', !peek);
   for (const k in keyEls) {
-    keyEls[k].classList.toggle('target', k === goal);
+    keyEls[k].classList.toggle('target', peek && k === goal);
     keyEls[k].classList.toggle('later', !learned.has(k) && k !== goal);
   }
-  for (const id in fingerEls) fingerEls[id].forEach(el => el.classList.toggle('on', goal != null && FINGER[goal] === id));
+  for (const id in fingerEls) fingerEls[id].forEach(el => el.classList.toggle('on', peek && goal != null && FINGER[goal] === id));
   const fn = $('#fname');
-  if (goal != null) {
+  if (goal != null && !peek) { fn.style.removeProperty('--fc'); fn.textContent = 'No peeking! Your fingers know the way.'; }
+  else if (goal != null) {
     const [hand, f] = FNAME[FINGER[goal]];
     fn.style.setProperty('--fc', fc(FINGER[goal]));
     fn.innerHTML = `${hand} · <b>${f}</b>`;
@@ -645,7 +696,7 @@ function press(k) {
   const goal = want();
   if (k === goal) {
     flash(k, 'hit');
-    G.ci++; G.wrongRun = 0; save.yuzu++;
+    G.ci++; G.wrongRun = 0; G.hint = false; save.yuzu++;
     tossYuzu(); capyHappy();
     if (G.ci >= item().length) {
       G.qi++; G.ci = 0;
@@ -653,12 +704,14 @@ function press(k) {
       headYuzu(Math.min(3, Math.floor(G.qi / G.queue.length * 3)));
       if (G.qi >= G.queue.length) { finish(); return; }
       if (isWords() || Math.random() < .25) setTip(cheer(), 'yay'); else setTip('');
+      if (needsCheck()) { persist(); render(); askFinger(); return; }
       sayItem();
     } else setTip('');
     persist(); render();
   } else {
     flash(k, 'miss'); sfx.oops();
     G.mistakes++; G.wrongRun++;
+    if (LEVELS[G.idx].nopeek && !G.hint) { G.hint = true; render(); }
     const shown = k === ' ' ? 'space' : k.toUpperCase();
     setTip(`That was ${shown}. Find the glowing ${sayKey(goal)}!`, 'oops');
     if (G.wrongRun >= 2) { speak(`Find ${sayKey(goal)}. Use your ${FNAME[FINGER[goal]][1]}.`); G.wrongRun = 0; }
@@ -666,7 +719,7 @@ function press(k) {
 }
 
 function beginLevel(idx) {
-  G = { idx, queue: makeQueue(idx), qi: 0, ci: 0, mistakes: 0, wrongRun: 0, playing: false };
+  G = { idx, queue: makeQueue(idx), qi: 0, ci: 0, mistakes: 0, wrongRun: 0, playing: false, hint: false, checked: [], checks: 0, checkFirst: 0 };
   $('#floaters').innerHTML = ''; headYuzu(0); drawFriends(-1); setTip('');
   render();
   const L = LEVELS[idx];
@@ -682,14 +735,55 @@ function beginLevel(idx) {
   } else {
     box.innerHTML = `<div class="sample">${L.words[0]}</div>`;
   }
+  $('#introTwists').innerHTML = (L.check ? '<span class="twist">✋ Finger Check</span>' : '') + (L.nopeek ? '<span class="twist">🙈 No Peeking</span>' : '');
   openOverlay('#introCard');
   speak(levelName(idx) + '. ' + L.tip);
 }
 function play() {
   closeOverlays();
   if (!G) { beginLevel(nextOpen()); return; }
-  G.playing = true; render(); sayItem();
+  G.playing = true; render();
+  if (needsCheck()) askFinger(); else sayItem();
 }
+
+// ---- Finger Check: before each word, tap the finger that types one of its letters ----
+const needsCheck = () => LEVELS[G.idx].check && G.qi < G.queue.length && G.ci === 0 && !G.checked[G.qi];
+const fingerWords = id => { const [hand, f] = FNAME[id]; return id === 'th' ? 'thumb' : `${hand.split(' ')[0].toLowerCase()} ${f}`; };
+function askFinger() {
+  const letters = [...new Set(item())].filter(c => FINGER[c] && c !== ' ');
+  // ask about a different finger than last time when the word allows it
+  const fresh = letters.filter(c => FINGER[c] !== G.lastFinger);
+  G.quizKey = pick(fresh.length ? fresh : letters); G.lastFinger = FINGER[G.quizKey];
+  G.quizMiss = 0; G.quizBusy = false;
+  $('#quizKey').textContent = G.quizKey === ',' ? 'comma' : G.quizKey === '.' ? 'period' : G.quizKey.toUpperCase();
+  $('#quizWord').textContent = item();
+  setQuizTip('Tap the finger on the hands.');
+  for (const id in quizEls) quizEls[id].forEach(el => el.classList.remove('right', 'wrong', 'hint'));
+  openOverlay('#checkCard');
+  speak(`Finger check! Which finger types ${quizSaid()}?`);
+}
+const quizSaid = () => G.quizKey === ',' ? 'the comma' : G.quizKey === '.' ? 'the period' : sayKey(G.quizKey);
+function setQuizTip(text, cls = '') { const el = $('#quizTip'); el.textContent = text; el.className = 'qtip ' + cls; }
+$('#quizHands').addEventListener('click', e => {
+  const el = e.target.closest('[data-f]');
+  if (!el || G.quizBusy || overlay !== '#checkCard') return;
+  const id = el.dataset.f, goal = FINGER[G.quizKey];
+  if (id === goal) {
+    G.quizBusy = true; G.checks++; if (!G.quizMiss) G.checkFirst++;
+    quizEls[id].forEach(x => x.classList.add('right'));
+    setQuizTip(`Yes! Your ${fingerWords(goal)}. Use it when you type ${quizSaid()}.`, 'yay');
+    sfx.word(); speak(`Yes! Your ${fingerWords(goal)}.`);
+    setTimeout(() => { G.checked[G.qi] = true; closeOverlays(); G.playing = true; render(); sayItem(); }, 1600);
+  } else {
+    G.quizMiss++; G.mistakes++; sfx.oops();
+    quizEls[id].forEach(x => { x.classList.remove('wrong'); void x.getBBox(); x.classList.add('wrong'); });
+    const said = id === 'th' ? 'That is your thumb. Thumbs are for the space bar.' : `That is your ${fingerWords(id)}.`;
+    setQuizTip(said + ' Try another one!', 'oops');
+    // after two misses, the right finger lights up
+    if (G.quizMiss >= 2) { quizEls[goal].forEach(x => x.classList.add('hint')); speak(`${quizSaid()} uses your ${fingerWords(goal)}. Tap the glowing finger.`); }
+    else speak(said + ' Try again!');
+  }
+});
 function finish() {
   G.playing = false; render();
   const stars = G.mistakes <= 1 ? 3 : G.mistakes <= 5 ? 2 : 1;
@@ -706,7 +800,8 @@ function finish() {
     $('#doneStars').innerHTML = [0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('');
     $('#doneFriend').textContent = emoji;
     $('#doneText').textContent = (firstTime ? `${name} jumped into the bath with Mochi!` : `${name} is splashing with you again!`) +
-      (stars < 3 ? ' Play again for more stars.' : '');
+      (L.check ? ` Finger Check: ${G.checkFirst} of ${G.checks} right on the first try.` : '') +
+      (stars < 3 ? ' Play again for more stars.' : '') + (L.note ? ' ' + L.note : '');
     $('#doneNext').hidden = last;
     $('#doneAgain').toggleAttribute('data-primary', last);
     $('#doneAgain').classList.toggle('go', last);
@@ -798,7 +893,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ---- boot ----
-G = { idx: nextOpen(), queue: makeQueue(nextOpen()), qi: 0, ci: 0, mistakes: 0, wrongRun: 0, playing: false };
+G = { idx: nextOpen(), queue: makeQueue(nextOpen()), qi: 0, ci: 0, mistakes: 0, wrongRun: 0, playing: false, hint: false, checked: [], checks: 0, checkFirst: 0 };
 render(); drawFriends(-1);
 for (let i = 0; i < 5; i++) { const [x, y] = pondSpot(); const g = sv('g', { transform: `translate(${x} ${y})` }, $('#floaters')); yuzu(11, sv('g', { class: 'bob', style: `animation-delay:-${i * .5}s` }, g)); }
 const nameInput = $('#kidName');
